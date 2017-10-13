@@ -37,6 +37,54 @@ class User extends Model implements AuthenticatableContract,
      */
     protected $hidden = ['password', 'remember_token'];
     
+    /**
+     * お気に入り登録している投稿を取得
+     */
+    public function get_favorites() {
+        return $this->belongsToMany(Micropost::class, 'favorites', 'user_id', 'micropost_id')->withTimestamps();
+    }
+    
+    /**
+    * お気に入り登録する
+    */
+    public function set_favorites($micropostId) {
+         // 既にお気に入り登録しているかの確認
+         $exist = $this->is_favorites($micropostId);
+         
+        if ($exist) {
+            // 既にお気に入り登録していれば何もしない
+            return false;
+        } else {
+            // お気に入り登録していない場合には登録する
+            $this->get_favorites()->attach($micropostId);
+            return true;
+        }
+    }
+    
+    /**
+    * お気に入り登録から外す
+    */
+    public function del_favorites($micropostId) {
+         // 既にお気に入り登録しているかの確認
+         $exist = $this->is_favorites($micropostId);
+         
+        if ($exist) {
+            // 既にお気に入り登録していればお気に入りを外す
+            $this->get_favorites()->detach($micropostId);
+            return true;
+        } else {
+            // お気に入り登録していない場合には何もしない
+            return false;
+        }
+    }
+     
+    /**
+    * お気に入り登録しているかの確認
+    */
+    public function is_favorites($micropostId) {
+         return $this->get_favorites()->where('micropost_id', $micropostId)->exists();
+    }
+     
     public function microposts() {
         return $this->hasMany(Micropost::class);
     }
